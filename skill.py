@@ -13,6 +13,11 @@ currentAnswer = ''
 startTime = 0
 currentPlayer = 1
 scores = []
+questionVal = 0
+
+#Constants
+
+TIME_LIMIT = 30
 
 # Life cycle
 
@@ -24,15 +29,15 @@ def launch():
 
 @ask.session_ended
 def sessionEnd():
-	return '', 200
+        print('sessionEnded')
+        return '', 200
 
 # Intents
 
-@ask.intent('PlayIntent', convert={'Players': int, 'Difficulty': str})
-def playGame(Players, Difficulty):
+@ask.intent('PlayIntent', convert={'Players': int})
+def playGame(Players):
         print('Players=' + str(Players))
-        print('Difficulty=' + str(Difficulty))
-        if Players and Difficulty:
+        if Players:
                 setPlayers(Players)
                 setScores([0]*Players)
                 return startRound(1)
@@ -41,36 +46,55 @@ def playGame(Players, Difficulty):
     
 @ask.intent('QuestionIntent')
 def getQuestion(Type):
+        print(Type)
         currentTime = time.time()
-        if currentTime - getStartTime() > 30:
+        if currentTime - getStartTime() > TIME_LIMIT:
                 print('Time is up!')
+                currPlyr = getCurrentPlayer()
+                if currPlyr == getPlayers():
+                        return reportScores()
+                return startRound(currPlyr + 1, timesUP=True)
         q = ''
         if Type == 'free throw':
+                setQuestionVal(1)
+                num1 = random.randint(1,10)
+                num2 = random.randint(1,10)
+                q = str(num1) + ' plus ' + str(num2)
+                setCurrentAnswer(num1+num2)
+        elif Type == '2 pointer':
+                setQuestionVal(2)
                 num1 = random.randint(1,10)
                 num2 = random.randint(1,10)
                 q = str(num1) + ' times ' + str(num2)
                 setCurrentAnswer(num1*num2)
-        elif Type == '2 pointer':
-                q = '3 time 10 divided by 5'
         elif Type == '3 pointer':
-                q = 'What\'s the average of 4, 3, and 7?'
+                setQuestionVal(3)
+                num1 = random.randint(1,10)
+                num2 = random.randint(1,10)
+                num3 = random.randint(1,10)
+                q = 'What\'s the average of {}, {}, and {}?'.format(num1, num2, num3)
+                setCurrentAnswer((num1+num2+num3)/3.0)
         elif Type == 'buzzer beater':
-                q = '12 times 11'
+                setQuestionVal(4)
+                num1 = random.randint(50,100)
+                num2 = random.randint(1,10)
+                q = 'What is the remainder of {} divided by {}?'.format(num1, num2)
+                setCurrentAnswer(num1%num2)
 
-        return question(q)
+        return question(q).reprompt(q)
 
 @ask.intent('AnswerIntent', convert={'Answer' : int})
 def answer(Answer):
     if Answer == getCurrentAnswer():
             plyrScores = getScores()
-            plyrScores[getCurrentPlayer()] += 1
+            plyrScores[getCurrentPlayer()-1] += getQuestionVal()
             setScores(plyrScores)
-            return question('Correct')
-    return question('Incorrect')
+            return question('Correct').reprompt('Correct')
+    return question('Incorrect').reprompt('Incorrect')
 
 @ask.intent('RulesIntent')
 def giveRules():
-    return statement('There are 4 quarters in every game. Each player has 30 seconds on the shot clock to answer as many questions as possible...Say free throw, 2 pointer, 3 pointer, or buzzer beater for a question. A free throw is 1 point, a 2 pointer is 2, a 3 pointer is 3, and a buzzer beater is worth 4. The more points it\'s worth, the harder the question! Good luck, and go Duke!')
+    return question('Each player has {} seconds on the shot clock to answer as many questions as possible...Say free throw, 2 pointer, 3 pointer, or buzzer beater for a question. A free throw is 1 point, a 2 pointer is 2, a 3 pointer is 3, and a buzzer beater is worth 4. The more points it\'s worth, the harder the question! Good luck, and go Duke!'.format(TIME_LIMIT))
 
 @ask.intent('QuitIntent')
 def quitIntent():
@@ -110,17 +134,39 @@ def setScores(val):
         global scores
         scores = val
 
-def getScores()
+def getScores():
         return scores
 
+def setQuestionVal(val):
+        global questionVal
+        questionVal = val
+
+def getQuestionVal():
+        return questionVal
+
 # Game logic
-def startRound(playerNum):
+def startRound(playerNum, timesUp=False):
         setStartTime(time.time())
-        prompt = 'Ok player ' + str(playerNum) + 'you have 30 seconds on the shot clock...start!'
+        setCurrentPlayer(playerNum)
+        prompt = 'Ok player {} you have {} seconds on the shot clock...start!'.format(playerNum, TIME_LIMIT)
+        if timesUp:
+                prompt = 'Times up! ' + prompt
         return question(prompt)
 
+def reportScores():
+        scrs = getScores()
+        winner = scrs.index(max(scrs)) + 1
+        prompt = 'The scores are in! Player {} has won with a score of {}.'.format(winner, scrs[winner-1])
+        if getPlayers() == 1:
+                return quitGame(text=prompt)
+        
+        for i in range(len(scrs)):
+                prompt += ' Player {} scored {},'.format(i+1, scrs[i])
+        prompt += ' and Player {} scored {}.'.format(getPlayers(), scrs[-1])
+        return quitGame(text=prompt)
+
 def quitGame(text = ''):
-	return statement(text + 'Thank you for playing...Come back soon!')
+	return statement(text + ' Thank you for playing...Come back soon!')
 
 if __name__ == '__main__':
 	app.run(debug=True)
