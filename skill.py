@@ -12,12 +12,13 @@ numPlayers = 0
 currentAnswer = ''
 startTime = 0
 currentPlayer = 1
+scores = []
 
 # Life cycle
 
 @ask.launch
 def launch():
-	prompt = 'Welcome to Mathketball... Say start when you are ready to play!'
+	prompt = 'Welcome to Mathketball... If this is your first time playing, say how do I play? Then say start when you are ready to play!'
 	reprompt = 'Say start when you are ready to play!'
 	return question(prompt).reprompt(reprompt)
 
@@ -33,6 +34,7 @@ def playGame(Players, Difficulty):
         print('Difficulty=' + str(Difficulty))
         if Players and Difficulty:
                 setPlayers(Players)
+                setScores([0]*Players)
                 return startRound(1)
         else:
                 return delegate('')
@@ -41,12 +43,13 @@ def playGame(Players, Difficulty):
 def getQuestion(Type):
         currentTime = time.time()
         if currentTime - getStartTime() > 30:
-                
+                print('Time is up!')
         q = ''
         if Type == 'free throw':
                 num1 = random.randint(1,10)
                 num2 = random.randint(1,10)
                 q = str(num1) + ' times ' + str(num2)
+                setCurrentAnswer(num1*num2)
         elif Type == '2 pointer':
                 q = '3 time 10 divided by 5'
         elif Type == '3 pointer':
@@ -56,9 +59,14 @@ def getQuestion(Type):
 
         return question(q)
 
-@ask.intent('AnswerIntent')
+@ask.intent('AnswerIntent', convert={'Answer' : int})
 def answer(Answer):
-    print(Answer)
+    if Answer == getCurrentAnswer():
+            plyrScores = getScores()
+            plyrScores[getCurrentPlayer()] += 1
+            setScores(plyrScores)
+            return question('Correct')
+    return question('Incorrect')
 
 @ask.intent('RulesIntent')
 def giveRules():
@@ -97,6 +105,13 @@ def setCurrentPlayer(val):
 
 def getCurrentPlayer():
         return currentPlayer
+
+def setScores(val):
+        global scores
+        scores = val
+
+def getScores()
+        return scores
 
 # Game logic
 def startRound(playerNum):
