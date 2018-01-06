@@ -1,0 +1,19 @@
+A 4 dimensional cube is called a tesseract.
+The number pi can't be expressed as a fraction.
+A number is divisible by 3 if the sum of its digits is divisible by 3.
+A number is divisible by 4 if the last 2 digits are divisible by 4.
+A number is divisible by 5 if it ends in a 5 or a 0.
+To multiply a number by 9, simply multiply by 10 and subtract that number.
+To multiply a number by 10, just add a zero.
+The spiral shape of a sunflower follows the Fibonacci sequence.
+If a pizza has radius z and height a, then its volume is Pizza. Pi times z times z times a.
+In a room of 23 people, there is more than a 50% chance that two people share the same birthday.
+If you shuffle a pack of cards correctly, chances are that order of cards has never been seen before in the history of the galaxy.
+10 factorial seconds is exactly 6 weeks.
+If a sphere is covered in hair, then no matter how you comb it, there will also be a hair sticking straight up. This is the hairy ball theorem.
+If you stir your coffee without lifting the spoon, there will always be at least one point that did not move from its original position.
+By the hairy ball theorem, there is always at least one point on Earth where the wind is absolutely still.
+If there are 57 people in a room, there is a 99% chance that two people share the same birthday.
+2 is the only even prime number.
+A circle is 2 Pi radians.
+The area of a circle is Pi R squared.
