@@ -22,7 +22,7 @@ questionNum = 0
 
 #Constants
 
-TIME_LIMIT = 30
+TIME_LIMIT = 60
 
 # Life cycle
 
@@ -63,27 +63,26 @@ def getQuestion(type, text=''):
                 setQuestionVal(2)
                 num1 = random.randint(1,10)
                 num2 = random.randint(1,10)
-                q = 'Free throw...{} times {}'.format(num1, num2)
+                q = '2 Pointer...{} times {}'.format(num1, num2)
                 setCurrentAnswer(num1*num2)
         elif type == 2:
                 setQuestionVal(3)
                 num1 = random.randint(1,10)
                 num2 = random.randint(1,10)
-                num3 = random.randint(1,10)
-                q = '2 pointer...What\'s the average of {}, {}, and {}?'.format(num1, num2, num3)
-                setCurrentAnswer((num1+num2+num3)/3.0)
+                q = '3 Pointer...What\'s the average of {} and {}?'.format(num1, num2)
+                setCurrentAnswer((num1+num2)/2.0)
         elif type == 3:
                 setQuestionVal(4)
                 num1 = random.randint(5,30)
                 num2 = random.randint(1,20)
                 num3 = random.randint(1,10)
-                q = '3 pointer...{} plus {} minus {}'.format(num1, num2, num3)
+                q = 'Buzzer Beater...{} plus {} minus {}'.format(num1, num2, num3)
                 setCurrentAnswer(num1+num2-num3)
         else:
                 setQuestionVal(1)
                 num1 = random.randint(1,10)
                 num2 = random.randint(1,10)
-                q = 'Buzzer beater...{} plus {}'.format(num1, num2)
+                q = 'Free Throw...{} plus {}'.format(num1, num2)
                 setCurrentAnswer(num1+num2)
 
         return question(text + q).reprompt(q)
@@ -229,7 +228,7 @@ def startRound(playerNum, timesUp=False):
         prompt = 'Ok player {} you have {} seconds on the shot clock...start!'.format(playerNum, TIME_LIMIT)
         if timesUp:
                 prompt = 'Times up! ' + prompt
-        return question(prompt)
+        return getQuestion(0, text=prompt)
 
 def reportScores():
         setGameActive(False)
@@ -239,7 +238,7 @@ def reportScores():
         if getPlayers() == 1:
                 return quitGame(text=prompt)
         
-        for i in range(len(scrs)):
+        for i in range(len(scrs)-1):
                 prompt += ' Player {} scored {},'.format(i+1, scrs[i])
         prompt += ' and Player {} scored {}.'.format(getPlayers(), scrs[-1])
         return quitGame(text=prompt)
@@ -276,5 +275,5 @@ def quitGame(text = ''):
         return statement(text + ' Thank you for playing...Come back soon!')
 
 if __name__ == '__main__':
-	app.run(debug=True)
+	app.run()
 
