@@ -18,6 +18,7 @@ threePtScore = 0
 gameMode = 0
 shotsRemaining = 10
 gameActive = False
+questionNum = 0
 
 #Constants
 
@@ -47,10 +48,9 @@ def playGame(Players):
         setGameActive(True)
         return startRound(1)
     
-@ask.intent('QuestionIntent')
-def getQuestion(Type):
+def getQuestion(type, text=''):
         if not getGameActive():
-                return question('')
+                return question('').reprompt('')
         
         currentTime = time.time()
         if currentTime - getStartTime() > TIME_LIMIT:
@@ -59,34 +59,34 @@ def getQuestion(Type):
                         return reportScores()
                 return startRound(currPlyr + 1, timesUp=True)
         q = ''
-        if Type == '2 pointer':
+        if type == 1:
                 setQuestionVal(2)
                 num1 = random.randint(1,10)
                 num2 = random.randint(1,10)
-                q = str(num1) + ' times ' + str(num2)
+                q = 'Free throw...{} times {}'.format(num1, num2)
                 setCurrentAnswer(num1*num2)
-        elif Type == '3 pointer':
+        elif type == 2:
                 setQuestionVal(3)
                 num1 = random.randint(1,10)
                 num2 = random.randint(1,10)
                 num3 = random.randint(1,10)
-                q = 'What\'s the average of {}, {}, and {}?'.format(num1, num2, num3)
+                q = '2 pointer...What\'s the average of {}, {}, and {}?'.format(num1, num2, num3)
                 setCurrentAnswer((num1+num2+num3)/3.0)
-        elif Type == 'buzzer beater':
+        elif type == 3:
                 setQuestionVal(4)
-                num1 = random.randint(30,60)
+                num1 = random.randint(5,30)
                 num2 = random.randint(1,20)
                 num3 = random.randint(1,10)
-                q = '{} plus {} minus {}'.format(num1, num2, num3)
+                q = '3 pointer...{} plus {} minus {}'.format(num1, num2, num3)
                 setCurrentAnswer(num1+num2-num3)
         else:
                 setQuestionVal(1)
                 num1 = random.randint(1,10)
                 num2 = random.randint(1,10)
-                q = str(num1) + ' plus ' + str(num2)
+                q = 'Buzzer beater...{} plus {}'.format(num1, num2)
                 setCurrentAnswer(num1+num2)
 
-        return question(q).reprompt(q)
+        return question(text + q).reprompt(q)
 
 @ask.intent('AnswerIntent', convert={'Answer' : int})
 def answer(Answer):
@@ -98,21 +98,23 @@ def answer(Answer):
                         plyrScores = getScores()
                         plyrScores[getCurrentPlayer()-1] += getQuestionVal()
                         setScores(plyrScores)
-                        return question('').reprompt('')
+                        num = getQuestionNum()
+                        setQuestionNum((num+1)%4)
+                        return getQuestion((num+1)%4, text='Correct! ')
                 elif getGameMode() == 1:
                         plyrScore = getThreePtScore()
                         plyrScore += getQuestionVal()
                         setThreePtScore(plyrScore)
-                        return giveMultQuestion()
+                        return giveMultQuestion(text='Correct! ')
 
         if getGameMode() == 1:
-                return giveMultQuestion()
+                return giveMultQuestion(text='Incorrect. ')
         
-        return question('').reprompt('Say free throw, 2 pointer, 3 pointer, or buzzer beater.')
+        return getQuestion((num+1)%4, text='Incorrect. ')
 
 @ask.intent('RulesIntent')
 def giveRules():
-    return question('Mathketball has 2 game modes: game and three point contest. To start a game, say, start a game with 3 players. Each player has {} seconds on the shot clock to answer as many questions as possible...Say free throw, 2 pointer, 3 pointer, or buzzer beater for a question. A free throw is 1 point, a 2 pointer is 2, a 3 pointer is 3, and a buzzer beater is worth 4. The more points it\'s worth, the harder the question! Say, free throw, and wait for the question. Then give the answer! The three point contest is single player, and focuses on multiplication. Start the contest by saying, start a three point contest. You will have 10 total questions to get a high score. The fifth and tenth shots are money balls, worth 2 points! Then listen to top five plays, or 5 fun and interesting math facts and tips and tricks. Good luck and have fun!'.format(TIME_LIMIT))
+    return question('Mathketball has 2 game modes: game and three point contest. To start a game, say, start a game with 3 players. Each player has {} seconds on the shot clock to answer as many questions as possible...The questions will rotate in difficulty.  A free throw is 1 point, a 2 pointer is 2, a 3 pointer is 3, and a buzzer beater is worth 4. The more points it\'s worth, the harder the question! The three point contest is single player, and focuses on multiplication. Start the contest by saying, start a three point contest. You will have 10 total questions to get a high score. The fifth and tenth shots are money balls, worth 2 points! Then listen to top five plays, or 5 fun and interesting math facts and tips and tricks. Good luck and have fun!'.format(TIME_LIMIT))
 
 @ask.intent('ThreePointContest')
 def play3PointContest():
@@ -210,15 +212,23 @@ def setGameActive(val):
 def getGameActive():
         return gameActive
 
+def setQuestionNum(val):
+        global questionNum
+        questionNum = val
+
+def getQuestionNum():
+        return questionNum
+
 # Game logic
 
 def startRound(playerNum, timesUp=False):
         setStartTime(time.time())
         setCurrentPlayer(playerNum)
+        setQuestionNum(0)
         prompt = 'Ok player {} you have {} seconds on the shot clock...start!'.format(playerNum, TIME_LIMIT)
         if timesUp:
                 prompt = 'Times up! ' + prompt
-        return question(prompt).reprompt('Say free throw, 2 pointer, 3 pointer, or buzzer beater.')
+        return question(prompt)
 
 def reportScores():
         setGameActive(False)
@@ -233,7 +243,7 @@ def reportScores():
         prompt += ' and Player {} scored {}.'.format(getPlayers(), scrs[-1])
         return quitGame(text=prompt)
 
-def giveMultQuestion():
+def giveMultQuestion(text=''):
         shotNum = getShotsRemaining()
         if shotNum == 0:
                 prompt = 'Game over! You scored {} points.'.format(getThreePtScore())
@@ -250,7 +260,7 @@ def giveMultQuestion():
         setCurrentAnswer(num1*num2)
         setShotsRemaining(shotNum - 1)
         prompt = '{} times {}'.format(num1, num2)
-        return question(prompt).reprompt(prompt)
+        return question(text + prompt).reprompt(prompt)
 
 def reset():
         setStartTime(0)
