@@ -92,14 +92,15 @@ def getQuestion(type, text=''):
 def answer(Answer):
         if not getGameActive():
                 return question('').reprompt('')
+
+        num = getQuestionNum()
+        setQuestionNum((num+1)%4)
         
         if Answer == getCurrentAnswer():
                 if getGameMode() == 0:
                         plyrScores = getScores()
                         plyrScores[getCurrentPlayer()-1] += getQuestionVal()
                         setScores(plyrScores)
-                        num = getQuestionNum()
-                        setQuestionNum((num+1)%4)
                         return getQuestion((num+1)%4, text='Correct! ')
                 elif getGameMode() == 1:
                         plyrScore = getThreePtScore()
